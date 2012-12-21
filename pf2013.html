@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="PF 2013">
+    <meta name="keywords" content="pf2013">
+    <meta name="author" content="Juraj Michalek">
+    <!-- http://georgik.sinusgear.com -->
+
+    <style type="text/css">
+        #gameContainer {
+            width: 640px;
+            height: 480px;
+            background: url(img/background.png);
+            position: relative;
+        }
+
+        #foreground {
+            top: 0;
+            left: 0;
+            width: 640px;
+            height: 480px;
+            background: url(img/foreground.png);
+            position: absolute;
+        }
+
+        .door {
+            width: 35px;
+            height: 31px;
+            background: url(img/door-black.png);
+            position: absolute;
+            color: white;
+        }
+
+        #character {
+            width: 23px;
+            height: 30px;
+            left: 10px;
+            top: 423px;
+            background: url(img/character.png);
+            position: absolute;
+        }
+
+        #leaderPointer {
+            width: 16px;
+            height: 16px;
+            background: url(img/leader-pointer.png);
+            position: absolute;
+        }
+
+        .floor {
+            width: 640px;
+            height: 10px;
+            background: url(img/floor.png) repeat-x;
+            position: absolute;
+        }
+
+        #floor1 {
+            top:40px;
+        }
+    </style>
+
+    <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript">
+        var WIDTH=640;
+        var HEIGHT=480;
+        var HEARTBEAT_TIME = 50;
+        var STEP_SIZE = 4;
+
+        var CHARACTER_MIDDLE_X = 8;
+        var CHARACTER_MIDDLE_Y = 8;
+        var CHARACTER_ADJUST_X = 16;
+        var CHARACTER_ADJUST_Y = 9;
+
+        var CHARACTER_START_X = 10;
+        var CHARACTER_START_Y = 420 + CHARACTER_ADJUST_Y;
+        var DOOR_HEIGHT = 31;
+
+        var characterX = CHARACTER_START_X;
+        var characterY = CHARACTER_START_Y;
+
+        var leaderX = characterX;
+        var leaderY = characterY;
+
+        var timer;
+        var selectedDoor = null;
+
+        /**
+         * True when leader is defined by mouse click and star is visible.
+         */
+        var isLeaderStar = false;
+
+        var isGameRunning = false;
+
+        var doors = [
+            {x:12, y:20, to:2},
+            {x:40, y:70, to:5},
+            {x:80, y:120, to:1},
+            {x:220, y:170, to:1},
+            {x:40, y:220, to:1},
+            {x:170, y:270, to:1},
+            {x:170, y:320, to:1},
+            {x:170, y:370, to:1},
+            {x:170, y:420, to:1}
+        ];
+
+        var floors = [
+            50, 100, 150, 200, 250, 300, 350, 400, 450
+        ];
+
+        /**
+         * Turn off leader star and following by star
+         */
+        function turnOffLeaderStar()
+        {
+            if (!isLeaderStar) {
+                return;
+            }
+
+            isLeaderStar = false;
+            $("#leaderPointer").fadeOut();
+        }
+
+
+        /**
+         * User click on the stage. Set leader by click.
+         */
+        function mouseClickHandler(event) {
+            if (!$(event.target).hasClass('door')) {
+                selectedDoor = null;
+            }
+            var x = event.pageX - this.offsetLeft;
+            var y = event.pageY - this.offsetTop;
+
+            var checkTop = characterY - CHARACTER_ADJUST_Y;
+            var checkBottom = checkTop + DOOR_HEIGHT;
+
+            // Check whether level of click corresponds to current level of character
+            if ((y < checkTop) || (y > checkBottom)) {
+                selectedDoor = null;
+            }
+
+            if (!isLeaderStar) {
+                isLeaderStar = true;
+                $("#leaderPointer").show();
+            }
+
+            leaderX = x;
+            leaderY = y;
+
+            $("#leaderPointer").css("left",leaderX-CHARACTER_MIDDLE_X+"px").css("top",leaderY-CHARACTER_MIDDLE_Y+"px");
+        }
+
+        /**
+         * Process user mouse move
+         */
+        function mouseMoveHandler(event) {
+            // Do not follow mouse when using star
+            return;
+            if (isLeaderStar) {
+                return;
+            }
+
+            var x = event.pageX - this.offsetLeft;
+            var y = event.pageY - this.offsetTop;
+
+            // Invalid values of coordinates
+            if (!x || !y) {
+                return;
+            }
+
+            leaderX = x;
+            leaderY = y;
+        }
+
+
+        /**
+         * Remember selected doors and invoke transition when character arrives.
+         * @param event
+         */
+        function doorClickHandler(event) {
+            selectedDoor = $(this).attr('index');
+            console.log("Selected door " + selectedDoor );
+        }
+
+        function displayDoor(index, door) {
+            var doorName = "door" + index;
+            var code = '<div id="' + doorName + '" class="door" index="' + index + '">' + index + ',' + door.to + '</div> ';
+            $("#doorContainer").prepend(code);
+            $("#" + doorName).css("left",door.x+"px").css("top",door.y+"px");
+        }
+
+        function createDoors() {
+            $.each(doors, displayDoor);
+            $(".door").click(doorClickHandler);
+        }
+
+        function displayFloor(index, floorTop) {
+            var floorName = "floor" + index;
+            var code = '<div id="' + floorName + '" class="floor"/> ';
+            $("#floorContainer").prepend(code);
+            $("#" + floorName).css("top",floorTop);
+        }
+
+
+        function createFloors() {
+            $.each(floors, displayFloor);
+        }
+
+
+        /**
+         * Place character to defined coordinates
+         * @param x
+         * @param y
+         */
+        function setCharacterPosition(x, y) {
+            if ((characterX == x) && (characterY ==y)) {
+                turnOffLeaderStar();
+                return;
+            }
+
+            characterX = x;
+            characterY = y;
+
+            // Check for finish
+            /*if ((FINISH_LEFT_TOP_X < x) && (FINISH_RIGHT_BOTTOM_X > x) &&
+                    (FINISH_LEFT_TOP_Y < y) && (FINISH_RIGHT_BOTTOM_Y > y)) {
+                turnOffLeaderStar();
+                finishReached();
+            } */
+
+            $("#character").css("left",characterX-CHARACTER_MIDDLE_X+"px").css("top",characterY-CHARACTER_MIDDLE_Y+"px");
+        }
+
+        /**
+         * Determine whether it is possible to walk to dofined coordinates.
+         */
+        function isWalkable(x, y) {
+            //pixelData = mazeContext.getImageData(x, y, 1, 1).data;
+
+            return true;
+            // Only white pixes are walkable
+            if ((pixelData[0] == 255) && (pixelData[1] == 255) && (pixelData[2] == 255)) {
+                return true;
+            }
+
+            return false;
+        }
+
+
+        /**
+         * Character arrived to destination activate wormhole transition.
+         */
+        function activateWormhole() {
+            if (selectedDoor == null) {
+                return;
+            }
+
+            var toIndex = doors[selectedDoor].to;
+            console.log("Transition to:" + toIndex);
+            var targetDoor = doors[toIndex];
+            leaderX = targetDoor.x + CHARACTER_ADJUST_X;
+            leaderY = targetDoor.y + CHARACTER_ADJUST_Y;
+            setCharacterPosition(leaderX, leaderY);
+            selectedDoor = null;
+        }
+
+        /**
+         * Move character in direction of defined vector.
+         * @param vectorX
+         * @param vectorY
+         */
+        function moveCharacter(vectorX, vectorY) {
+            var newX = characterX + vectorX;
+            var newY = characterY;
+            if (newX < 0) {
+                newX = 0;
+            }
+
+            if (newX > WIDTH) {
+                newX = WIDTH;
+            }
+
+
+            // No new coordinates
+            if (newX == characterX) {
+                turnOffLeaderStar();
+                activateWormhole();
+                return;
+            }
+
+            // Check whether direction is walkable and update coordinates
+            if (isWalkable(newX, newY)) {
+                setCharacterPosition(newX, newY);
+            } else if (isWalkable(newX, characterY)) {
+                setCharacterPosition(newX, characterY);
+            } else if (isWalkable(characterX, newY)) {
+                setCharacterPosition(characterX, newY);
+            } else if (isLeaderStar) {
+                // It is not possible to move in any direction, turn of leader star
+                turnOffLeaderStar();
+            }
+        }
+
+        /**
+         * Compute motion vector and update scene
+         */
+        function updateScene() {
+            var vectorX = 0;
+            var vectorY = 0;
+
+            // Compute diff size - avoid image jumping
+            var diffX = Math.abs(leaderX - characterX);
+            var diffY = Math.abs(leaderY - characterY);
+
+            if (diffX >= STEP_SIZE) {
+                if (leaderX < characterX ) {
+                    vectorX = -STEP_SIZE;
+                } else if (leaderX > characterX ) {
+                    vectorX = STEP_SIZE;
+                }
+            }
+
+            /*if (diffY >= STEP_SIZE) {
+                if (leaderY < characterY) {
+                    vectorY = -STEP_SIZE;
+                } else if (leaderY > characterY) {
+                    vectorY = STEP_SIZE;
+                }
+            }*/
+
+            if (vectorX == 0) {
+                turnOffLeaderStar();
+                activateWormhole();
+                return;
+            }
+
+            moveCharacter(vectorX, vectorY);
+        }
+
+
+        /**
+         * Update scene
+         */
+        function hearbeat() {
+            // Do not listen for timeout for redraw when game is not active
+            if (!isGameRunning) {
+                return;
+            }
+
+            timer = setTimeout('hearbeat()',HEARTBEAT_TIME);
+
+            updateScene();
+        }
+
+
+        function stageReadyHandler() {
+            isGameRunning = true;
+            timer = setTimeout('hearbeat()',HEARTBEAT_TIME);
+            $("#gameContainer").mousemove(mouseMoveHandler).click(mouseClickHandler);
+        }
+
+        function documentReadyHandler() {
+            createDoors();
+            createFloors();
+        }
+
+        $(document).ready(documentReadyHandler);
+        $(window).load(stageReadyHandler);
+
+    </script>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div id="foreground"></div>
+    <div id="doorContainer"></div>
+    <div id="character"></div>
+    <div id="floorContainer"></div>
+    <div id="leaderPointer" style="display: none;"></div>
+</div>
+
+</body>
+</html>
