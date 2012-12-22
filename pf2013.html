@@ -82,7 +82,7 @@
             font-size: 32px;
             width: 160px;
             height: 50px;
-            top:340px;
+            top:350px;
             left: 10px;
             border-radius: 10px;
             border: 2px solid black;
@@ -95,6 +95,13 @@
         #restartButton:hover {
             border: 2px solid #9acd32;
             background: #EEEEEE;
+        }
+
+        #social {
+            position: absolute;
+            top: 320px;
+            left: 10px;
+            display: none;
         }
 
         #notSupportedMessage {
@@ -306,6 +313,7 @@
 
         function displayRestartButton() {
             $("#restartButton").fadeIn();
+            $("#social").fadeIn();
         }
 
         /**
@@ -316,6 +324,7 @@
             $("#pfmessage").fadeOut();
             $("#author").fadeOut();
             $("#restartButton").fadeOut();
+            $("#social").fadeOut();
             $("#character").fadeIn();
             $("#intro").fadeIn();
 
@@ -511,6 +520,25 @@
     <div id="pfmessage">PF 2013</div>
     <div id="author"><a href="http://georgik.sinusgear.com">Juraj :-)</a></div>
     <div id="restartButton">Restart</div>
+    <div id="social">
+        <!-- Twitter -->
+        <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://goo.gl/At2x5" data-text="Little snowman found xmas tree thanks to me :-)" data-via="sinusgear" data-hashtags="pf2013" data-dnt="true">Tweet</a>
+        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+
+        <!-- Google +1 -->
+        <!-- Place this tag where you want the +1 button to render. -->
+        <div class="g-plusone"></div>
+
+        <!-- Place this tag after the last +1 button tag. -->
+        <script type="text/javascript">
+            (function() {
+                var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+                po.src = 'https://apis.google.com/js/plusone.js';
+                po.href = "http://georgik.sinusgear.com/2012/12/22/pf-2013/";
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+            })();
+        </script>
+    </div>
     <div id="notSupportedMessage">
         <div>PF 2013 :)</div>
         <div>BTW:</div>
