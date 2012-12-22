@@ -11,25 +11,14 @@
         #gameContainer {
             width: 640px;
             height: 480px;
-            background: url(img/background.png);
+            background: url(img/complex-background.png);
             position: relative;
-        }
-
-        #foreground {
-            top: 0;
-            left: 0;
-            width: 640px;
-            height: 480px;
-            background: url(img/foreground.png);
-            position: absolute;
         }
 
         .door {
             width: 35px;
             height: 31px;
-            background: url(img/door-black.png);
             position: absolute;
-            color: white;
         }
 
         #character {
@@ -48,20 +37,87 @@
             position: absolute;
         }
 
-        .floor {
-            width: 640px;
-            height: 10px;
-            background: url(img/floor.png) repeat-x;
-            position: absolute;
+        a {
+            text-decoration: none;
+            color: white;
         }
 
-        #floor1 {
-            top:40px;
+        a:hover {
+            text-decoration: underline;
         }
+
+        #pfmessage {
+            position: absolute;
+            color: white;
+            text-shadow: gray 2px 2px 2px;
+            top: -72px;
+            left: 240px;
+            font-family: 'Flavors', cursive;
+            font-size: 72px;
+            display: none;
+        }
+
+        #author {
+            color: yellow;
+            text-decoration: none;
+            font-family: 'Flavors', cursive;
+            text-shadow: gray 2px 2px 2px;
+            font-size: 48px;
+            position: absolute;
+            top: -48px;
+            left: 400px;
+            display: none;
+        }
+
+        #restartButton {
+            position: absolute;
+            font-family: 'Flavors', cursive;
+            text-shadow: gray 2px 2px 2px;
+            font-size: 32px;
+            width: 160px;
+            height: 50px;
+            top:340px;
+            left: 10px;
+            border-radius: 10px;
+            border: 2px solid black;
+            background: #CCCCCC;
+            cursor: pointer;
+            text-align: center;
+            display: none;
+        }
+
+        #restartButton:hover {
+            border: 2px solid #9acd32;
+            background: #EEEEEE;
+        }
+
+        #notSupportedMessage {
+            font-family: 'Flavors', cursive;
+            font-size: 30px;
+            text-align: center;
+            text-shadow: gray 2px 2px 2px;
+            position: absolute;
+            top:100px;
+            left: 20px;
+            right: 20px;
+            border-radius: 10px;
+            border: 2px solid black;
+            background: #CCCCCC;
+            cursor: pointer;
+            display: none;
+        }
+
+        #loader {
+            position: absolute;
+            top:300px;
+            left: 300px;
+        }
+
     </style>
 
     <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
     <script type="text/javascript">
+        var mazeContext = null;
         var WIDTH=640;
         var HEIGHT=480;
         var HEARTBEAT_TIME = 50;
@@ -79,10 +135,17 @@
         var characterX = CHARACTER_START_X;
         var characterY = CHARACTER_START_Y;
 
+        var FINISH_LEFT_TOP_X = 595;
+        var FINISH_LEFT_TOP_Y = 410;
+
+        var FINISH_RIGHT_BOTTOM_X = 638;
+        var FINISH_RIGHT_BOTTOM_Y = 454;
+
         var leaderX = characterX;
         var leaderY = characterY;
 
         var timer;
+        var pixelData;
         var selectedDoor = null;
 
         /**
@@ -91,22 +154,62 @@
         var isLeaderStar = false;
 
         var isGameRunning = false;
+        var isCanvasSupported = true;
 
         var doors = [
-            {x:12, y:20, to:2},
-            {x:40, y:70, to:5},
-            {x:80, y:120, to:1},
-            {x:220, y:170, to:1},
-            {x:40, y:220, to:1},
-            {x:170, y:270, to:1},
-            {x:170, y:320, to:1},
-            {x:170, y:370, to:1},
-            {x:170, y:420, to:1}
+            {id:0, x:12, y:20, to:32},
+            {id:1, x:40, y:70, to:5},
+            {id:2, x:80, y:120, to:1},
+            {id:3, x:290, y:170, to:34},
+            {id:4, x:30, y:220, to:8},
+            {id:5, x:190, y:270, to:1},
+            {id:6, x:320, y:320, to:7},
+            {id:7, x:120, y:370, to:3},
+            {id:8, x:170, y:420, to:12},
+            {id:9, x:20, y:370, to:1},
+            {id:10, x:310, y:420, to:8},
+            {id:11, x:230, y:370, to:13},
+            {id:12, x:300, y:370, to:0},
+            {id:13, x:370, y:370, to:4},
+            {id:14, x:600, y:370, to:33},
+            {id:15, x:20, y:320, to:8},
+            {id:16, x:170, y:320, to:18},
+            {id:17, x:510, y:320, to:10},
+            {id:18, x:40, y:270, to:35},
+            {id:19, x:600, y:270, to:23},
+            {id:20, x:400, y:270, to:17},
+            {id:21, x:150, y:220, to:23},
+            {id:22, x:420, y:220, to:19},
+            {id:23, x:590, y:220, to:9},
+            {id:24, x:410, y:170, to:26},
+            {id:25, x:450, y:170, to:16},
+            {id:26, x:600, y:170, to:21},
+            {id:27, x:400, y:120, to:25},
+            {id:28, x:160, y:70, to:5},
+            {id:29, x:600, y:70, to:5},
+            {id:30, x:62, y:20, to:5},
+            {id:31, x:112, y:20, to:2},
+            {id:32, x:162, y:20, to:35},
+            {id:33, x:600, y:20, to:3},
+            {id:34, x:500, y:20, to:6},
+            {id:35, x:380, y:20, to:8}
         ];
 
         var floors = [
             50, 100, 150, 200, 250, 300, 350, 400, 450
         ];
+
+        /**
+         * Load image which defines possible movements in the maze.
+         */
+        function initalizeMaze() {
+            var img = new Image();
+            img.src = 'img/walkable.png';
+
+            mazeContext = document.getElementById('canvas').getContext('2d');
+            mazeContext.drawImage(img, 0, 0);
+            isGameRunning = true;
+        }
 
         /**
          * Turn off leader star and following by star
@@ -152,40 +255,16 @@
         }
 
         /**
-         * Process user mouse move
-         */
-        function mouseMoveHandler(event) {
-            // Do not follow mouse when using star
-            return;
-            if (isLeaderStar) {
-                return;
-            }
-
-            var x = event.pageX - this.offsetLeft;
-            var y = event.pageY - this.offsetTop;
-
-            // Invalid values of coordinates
-            if (!x || !y) {
-                return;
-            }
-
-            leaderX = x;
-            leaderY = y;
-        }
-
-
-        /**
          * Remember selected doors and invoke transition when character arrives.
          * @param event
          */
         function doorClickHandler(event) {
             selectedDoor = $(this).attr('index');
-            console.log("Selected door " + selectedDoor );
         }
 
         function displayDoor(index, door) {
             var doorName = "door" + index;
-            var code = '<div id="' + doorName + '" class="door" index="' + index + '">' + index + ',' + door.to + '</div> ';
+            var code = '<div id="' + doorName + '" class="door" index="' + index + '"></div> ';
             $("#doorContainer").prepend(code);
             $("#" + doorName).css("left",door.x+"px").css("top",door.y+"px");
         }
@@ -195,16 +274,49 @@
             $(".door").click(doorClickHandler);
         }
 
-        function displayFloor(index, floorTop) {
-            var floorName = "floor" + index;
-            var code = '<div id="' + floorName + '" class="floor"/> ';
-            $("#floorContainer").prepend(code);
-            $("#" + floorName).css("top",floorTop);
+        /**
+         * Finish was successfully reached, play outro.
+         */
+        function finishReached() {
+            turnOffLeaderStar();
+            $("#pfmessage").css('top','-72px');
+            $("#author").css('top','-48px');
+            isGameRunning = false;
+            $("#gameContainer").off("mousemove").off("click");
+            $("#character").fadeOut();
+
+            $("#outroImage").fadeIn(2000, outroImageCallback);
+        }
+
+        /**
+         * Display rest of outro
+         */
+        function outroImageCallback() {
+            $("#pfmessage").show().animate({top:"200px"},3500, "swing");
+            $("#author").show().animate({top:"350px"}, 3500, "swing", displayRestartButton);
         }
 
 
-        function createFloors() {
-            $.each(floors, displayFloor);
+        function displayRestartButton() {
+            $("#restartButton").fadeIn();
+        }
+
+        /**
+         * Restart of application was requested. Reset all necessary data
+         */
+        function restartHandler() {
+            $("#outroImage").fadeOut(2500, stageReadyHandler);
+            $("#pfmessage").fadeOut();
+            $("#author").fadeOut();
+            $("#restartButton").fadeOut();
+            $("#character").fadeIn();
+
+            // resume game life
+            isGameRunning = true;
+
+            setCharacterPosition(CHARACTER_START_X, CHARACTER_START_Y);
+            leaderX = characterX;
+            leaderY = characterY;
         }
 
 
@@ -223,28 +335,23 @@
             characterY = y;
 
             // Check for finish
-            /*if ((FINISH_LEFT_TOP_X < x) && (FINISH_RIGHT_BOTTOM_X > x) &&
+            if ((FINISH_LEFT_TOP_X < x) && (FINISH_RIGHT_BOTTOM_X > x) &&
                     (FINISH_LEFT_TOP_Y < y) && (FINISH_RIGHT_BOTTOM_Y > y)) {
                 turnOffLeaderStar();
                 finishReached();
-            } */
+            }
 
             $("#character").css("left",characterX-CHARACTER_MIDDLE_X+"px").css("top",characterY-CHARACTER_MIDDLE_Y+"px");
         }
 
         /**
-         * Determine whether it is possible to walk to dofined coordinates.
+         * Determine whether it is possible to walk to defined coordinates.
          */
         function isWalkable(x, y) {
-            //pixelData = mazeContext.getImageData(x, y, 1, 1).data;
+            pixelData = mazeContext.getImageData(x, y, 1, 1).data;
 
-            return true;
             // Only white pixes are walkable
-            if ((pixelData[0] == 255) && (pixelData[1] == 255) && (pixelData[2] == 255)) {
-                return true;
-            }
-
-            return false;
+            return (pixelData[0] == 255 && pixelData[1] == 255 && pixelData[2] == 255);
         }
 
 
@@ -257,7 +364,6 @@
             }
 
             var toIndex = doors[selectedDoor].to;
-            console.log("Transition to:" + toIndex);
             var targetDoor = doors[toIndex];
             leaderX = targetDoor.x + CHARACTER_ADJUST_X;
             leaderY = targetDoor.y + CHARACTER_ADJUST_Y;
@@ -321,14 +427,6 @@
                 }
             }
 
-            /*if (diffY >= STEP_SIZE) {
-                if (leaderY < characterY) {
-                    vectorY = -STEP_SIZE;
-                } else if (leaderY > characterY) {
-                    vectorY = STEP_SIZE;
-                }
-            }*/
-
             if (vectorX == 0) {
                 turnOffLeaderStar();
                 activateWormhole();
@@ -342,27 +440,42 @@
         /**
          * Update scene
          */
-        function hearbeat() {
+        function heartbeat() {
             // Do not listen for timeout for redraw when game is not active
             if (!isGameRunning) {
                 return;
             }
 
-            timer = setTimeout('hearbeat()',HEARTBEAT_TIME);
+            timer = setTimeout('heartbeat()',HEARTBEAT_TIME);
 
             updateScene();
         }
 
 
         function stageReadyHandler() {
-            isGameRunning = true;
-            timer = setTimeout('hearbeat()',HEARTBEAT_TIME);
-            $("#gameContainer").mousemove(mouseMoveHandler).click(mouseClickHandler);
+            $("#loader").fadeOut();
+            initalizeMaze();
+            timer = setTimeout('heartbeat()',HEARTBEAT_TIME);
+            $("#gameContainer").click(mouseClickHandler);
+        }
+
+        /**
+         * User does not have browser with HTML5 Cavas - redirect to download
+         */
+        function redirectToGoogleChrome() {
+            $(location).attr('href',"https://www.google.com/chrome");
         }
 
         function documentReadyHandler() {
             createDoors();
-            createFloors();
+
+            // Test canvas support
+            if (!("HTMLCanvasElement" in window)) {
+                $("#notSupportedMessage").show().on("click",redirectToGoogleChrome);
+                isCanvasSupported = false;
+                return;
+            }
+            $("#restartButton").on("click",restartHandler);
         }
 
         $(document).ready(documentReadyHandler);
@@ -373,12 +486,26 @@
 <body>
 
 <div id="gameContainer">
-    <div id="foreground"></div>
-    <div id="doorContainer"></div>
     <div id="character"></div>
-    <div id="floorContainer"></div>
+    <div id="doorContainer"></div>
     <div id="leaderPointer" style="display: none;"></div>
+    <img id="loader" src="img/ajax-loader.gif">
+    <img id="outroImage" src="img/outro.jpg" style="display: none;">
+    <div id="pfmessage">PF 2013</div>
+    <div id="author"><a href="http://georgik.sinusgear.com">Juraj :-)</a></div>
+    <div id="restartButton">Restart</div>
+    <div id="notSupportedMessage">
+        <div>PF 2013 :)</div>
+        <div>BTW:</div>
+        <div>Your browser does not support HTML5 Canvas.</div>
+        <div>Please use latest version of modern browser.</div>
+        <div>(IE9, Google Chrome, Opera, Firefox, Safari)</div>
+    </div>
 </div>
+
+<canvas id="canvas" width="640x" height="480px" style="display: none;">Canvas is not supported. Please use modern browser.</canvas>
+<img id="layoutImage" src="img/walkable.png" style="display: none;">
+
 
 </body>
 </html>
