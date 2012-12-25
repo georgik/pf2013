@@ -72,7 +72,7 @@
             text-shadow: gray 2px 2px 2px;
             font-size: 48px;
             position: absolute;
-            top: -48px;
+            top: -62px;
             left: 400px;
             display: none;
         }
@@ -99,11 +99,19 @@
             background: #EEEEEE;
         }
 
-        #social {
+        #campaign {
             position: absolute;
-            top: 320px;
-            left: 10px;
+            top: 20px;
+            left: 20px;
+            width: 580px;
+            height: 120px;
             display: none;
+            padding: 5px;
+            text-shadow: gray 2px 2px 2px;
+            font-size: 24px;
+            border: 2px solid black;
+            background: url(img/capmaign-background.png);
+            border-radius: 10px;
         }
 
         #notSupportedMessage {
@@ -180,7 +188,7 @@
             {x:190, y:270, to:1},
             {x:320, y:320, to:7},
             {x:120, y:370, to:3},
-            {x:170, y:420, to:12},
+            {x:170, y:420, to:10},
             {x:20, y:370, to:1},
             {x:310, y:420, to:8},
             {x:230, y:370, to:13},
@@ -296,7 +304,7 @@
         function finishReached() {
             turnOffLeaderStar();
             $("#pfmessage").css('top','-72px');
-            $("#author").css('top','-48px');
+            $("#author").css('top','-68px');
             isGameRunning = false;
             $("#gameContainer").off("mousemove").off("click");
             $("#character").fadeOut();
@@ -315,7 +323,7 @@
 
         function displayRestartButton() {
             $("#restartButton").fadeIn();
-            $("#social").fadeIn();
+            $("#campaign").load("campaign.php").fadeIn();
         }
 
         /**
@@ -326,7 +334,7 @@
             $("#pfmessage").fadeOut();
             $("#author").fadeOut();
             $("#restartButton").fadeOut();
-            $("#social").fadeOut();
+            $("#campaign").fadeOut();
             $("#character").fadeIn();
             $("#intro").fadeIn();
 
@@ -503,6 +511,8 @@
             }
             $("#restartButton").on("click",restartHandler);
             $("#intro").on("click", introClickHandler);
+
+            $("#author").load("credits.html").fadeIn();
         }
 
         $(document).ready(documentReadyHandler);
@@ -522,24 +532,7 @@
     <div id="pfmessage">PF 2013</div>
     <div id="author"><a href="http://georgik.sinusgear.com">Juraj :-)</a></div>
     <div id="restartButton">Restart</div>
-    <div id="social">
-        <!-- Twitter -->
-        <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://goo.gl/At2x5" data-text="Little snowman found xmas tree thanks to me :-)" data-via="sinusgear" data-hashtags="pf2013" data-dnt="true">Tweet</a>
-        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-
-        <!-- Google +1 -->
-        <!-- Place this tag where you want the +1 button to render. -->
-        <div class="g-plusone" data-href="http://georgik.sinusgear.com/2012/12/22/pf-2013/"></div>
-
-        <!-- Place this tag after the last +1 button tag. -->
-        <script type="text/javascript">
-            (function() {
-                var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-                po.src = 'https://apis.google.com/js/plusone.js';
-                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-            })();
-        </script>
-    </div>
+    <div id="campaign"></div>
     <div id="notSupportedMessage">
         <div>PF 2013 :)</div>
         <div>BTW:</div>
